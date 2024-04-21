@@ -2,14 +2,16 @@
 using GestionHotelApi.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using System.Security.Claims;
 
 namespace GestionHotelApi.Services
 {
     public class UtilisateurService
     {
         private readonly IMongoCollection<Utilisateur> _utilisateurCollection;
+        private readonly JwtService _jwtService;
         public UtilisateurService(
-         IOptions<MongoDBSettings> mongoDBSettings)
+         IOptions<MongoDBSettings> mongoDBSettings, JwtService jwtService)
         {
             var mongoClient = new MongoClient(
                 mongoDBSettings.Value.ConnectionString);
@@ -19,12 +21,31 @@ namespace GestionHotelApi.Services
 
             _utilisateurCollection = mongoDatabase.GetCollection<Utilisateur>(
                 mongoDBSettings.Value.UtilisateurCollectionName);
+            _jwtService = jwtService;
         }
 
-        internal async Task<Utilisateur> AuthenticateAsync(string email, string motDePasse)
+        internal async Task<AuthentificationResult> AuthenticateAsync(string email, string motDePasse)
         {
             var utilisateur = await _utilisateurCollection.Find(u => u.Email == email && u.MotDePasse == motDePasse).FirstOrDefaultAsync();
-            return utilisateur;
+            if (utilisateur == null)
+            {
+                throw new Exception("Utilisateur introuvable");
+            }
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, utilisateur.Nom),
+        new Claim(ClaimTypes.Email, utilisateur.Email),
+    };
+
+            var claimsIdentity = new ClaimsIdentity(claims, "jwt");
+
+            var jwtToken = _jwtService.GenerateToken(claimsIdentity);
+
+            return new AuthentificationResult
+            {
+                Token = jwtToken,
+                Utilisateur = utilisateur
+            };
         }
 
         internal async Task<List<Utilisateur>> GetAllUtilisateurAsync()

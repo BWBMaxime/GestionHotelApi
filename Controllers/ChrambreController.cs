@@ -17,6 +17,15 @@ namespace GestionHotelApi.Controllers
             return listeChambre;
         }
 
+
+        [HttpGet]
+        [Route("/chambre-personnel-menage")]
+        public async Task<List<Chambre>> GetAllPourMenageChambre()
+        {
+            var listeChambre = await _chambreService.GetAllChambrePourMenageChambreAsync();
+            return listeChambre;
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Chambre>> GetChambreById(string id)
         {

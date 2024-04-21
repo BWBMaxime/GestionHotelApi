@@ -13,7 +13,6 @@ namespace GestionHotelApi.Data
             var client = new MongoClient(settings.Value.ConnectionString);
             _database = client.GetDatabase(settings.Value.DatabaseName);
 
-            // Crée la base de données si elle n'existe pas
             var databaseExists = client.ListDatabaseNames().ToList().Any(dbName => dbName == settings.Value.DatabaseName);
             if (!databaseExists)
             {
@@ -22,7 +21,6 @@ namespace GestionHotelApi.Data
             }
         }
 
-        // Ajoutez ici les collections de votre base de données en tant que propriétés
         public IMongoCollection<Chambre> Chambre { get { return _database.GetCollection<Chambre>("Chambre"); } }
     }
 }

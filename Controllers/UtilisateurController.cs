@@ -1,6 +1,7 @@
 ﻿using GestionHotelApi.Models;
 using GestionHotelApi.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
 
 namespace GestionHotelApi.Controllers
 {
@@ -11,14 +12,15 @@ namespace GestionHotelApi.Controllers
         private readonly UtilisateurService _utilisateurService = utilisateurService;
 
         [HttpPost("authentification")]
-        public async Task<ActionResult<Utilisateur>> Authenticate([FromBody] AuthenticationRequest request)
+        public async Task<ActionResult<string>> Authenticate([FromBody] AuthenticationRequest request)
         {
             var utilisateur = await _utilisateurService.AuthenticateAsync(request.Email, request.MotDePasse);
             if (utilisateur == null)
             {
-                return Unauthorized(); 
+                return Unauthorized();
             }
-            return utilisateur;
+
+            return "Utilisateur connecté";
         }
 
         [HttpGet]

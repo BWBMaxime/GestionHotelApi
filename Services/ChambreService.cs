@@ -21,6 +21,12 @@ namespace GestionHotelApi.Services
             _chambreCollection = mongoDatabase.GetCollection<Chambre>(
                 mongoDBSettings.Value.ChambreCollectionName);
         }
+        public async Task<List<Chambre>> GetAllChambrePourMenageChambreAsync()
+        {
+            var filter = Builders<Chambre>.Filter.Eq(chambre => chambre.Etat, "A nettoyer");
+            return await _chambreCollection.Find(filter).ToListAsync();
+        }
+
 
         public async Task<List<Chambre>> GetAllChambreAsync()
         {

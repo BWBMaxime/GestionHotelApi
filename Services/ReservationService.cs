@@ -45,12 +45,82 @@ namespace GestionHotelApi.Services
                 }
             }
 
-            var allChambres = await _chambreService.GetAsync();
+            var allChambres = await _chambreService.GetAllChambreAsync();
 
             var chambresNonReservees = allChambres.Where(chambre => !chambreReserveeIds.Contains(chambre.Id)).ToList();
 
             return chambresNonReservees;
         }
 
+
+        public async Task<Reservation> CreateReservationAsync(Reservation reservation,int cardNumbers)
+        {
+            foreach (var chambreId in reservation.Chambre.Select(c => c.Id))
+            {
+                bool chambreDisponible = await IsChambreAvailable(chambreId, reservation.DateDébut, reservation.DateFin);
+                if (!chambreDisponible)
+                {
+                    throw new Exception($"La chambre avec l'ID {chambreId} n'est pas disponible pour les dates spécifiées.");
+                }
+            }
+
+            decimal prixTotal = CalculateTotalPrice(reservation);
+
+            // Traitement de paiement (service factice)
+            //bool paiementEffectue = await _paymentService.ProcessPaymentAsync(cardNumbers, prixTotal);
+            //if (!paiementEffectue)
+            //{
+            //    throw new Exception("Le paiement n'a pas pu être effectué.");
+            //}
+
+            reservation.MontantTotal = prixTotal;
+            await _reservationCollection.InsertOneAsync(reservation);
+            return reservation;
+        }
+
+        private async Task<bool> IsChambreAvailable(string chambreId, DateTime dateDebut, DateTime dateFin)
+        {
+            var reservations = await _reservationCollection.Find(r =>
+                r.Chambre.Any(c => c.Id == chambreId) &&
+                ((r.DateDébut >= dateDebut && r.DateDébut < dateFin) || (r.DateFin > dateDebut && r.DateFin <= dateFin))
+            ).ToListAsync();
+
+            return reservations.Count == 0;
+        }
+
+        private decimal CalculateTotalPrice(Reservation reservation)
+        {
+            decimal prixTotal = 0;
+
+            foreach (var chambre in reservation.Chambre)
+            {
+                prixTotal += chambre.Tarif;
+            }
+
+            int nombreNuits = (int)(reservation.DateFin - reservation.DateDébut).TotalDays;
+
+            prixTotal *= nombreNuits;
+
+            return prixTotal;
+        }
+        public async Task<Reservation> GetReservationByIdAsync(string id)
+        {
+            return await _reservationCollection.Find(r => r.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<List<Reservation>> GetAllReservationsAsync()
+        {
+            return await _reservationCollection.Find(_ => true).ToListAsync();
+        }
+
+        public async Task UpdateReservationAsync(Reservation reservation)
+        {
+            await _reservationCollection.ReplaceOneAsync(r => r.Id == reservation.Id, reservation);
+        }
+
+        public async Task DeleteReservationAsync(string id)
+        {
+            await _reservationCollection.DeleteOneAsync(r => r.Id == id);
+        }
     }
 }
