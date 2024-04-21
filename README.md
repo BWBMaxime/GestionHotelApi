@@ -21,7 +21,7 @@ Le service utilise une base de données MongoDB pour stocker les données. La co
 ## Utilisation
 1. Clonez ce dépôt.
 2. Configurez les paramètres dans le fichier `appsettings.json`.
-3. Exécutez la solution GestioHotelApi.sln
+3. Exécutez la solution GestionHotelApi.sln
 4. Explorez et testez les routes disponibles à l'aide de Swagger ou d'un outil similaire.
 
 ## Design Patterns utilisés
